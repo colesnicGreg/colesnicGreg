@@ -1,7 +1,7 @@
 {
 	"productLoadText": "Swedish: Product is loading",
-	"configuratorLoadText": "configuratorLoadText",
-	"variantLoadPrefix": "variantLoadPrefix",
+	"configuratorLoadText": " Swedish: Configurator is loading",
+	"variantLoadPrefix": "Swedish: variantLoadPrefix",
 	"photostudio_cameraPositionsLeft": "photostudio_cameraPositionsLeft",
 	"photostudio_cameraPositionsRight": "photostudio_cameraPositionsRight",
 	"photostudio_cameraPositionsTop": "photostudio_cameraPositionsTop",
@@ -9,9 +9,9 @@
 	"photostudio_cameraPositionsLeftAngle": "photostudio_cameraPositionsLeftAngle",
 	"photostudio_cameraPositionsRightAngle": "photostudio_cameraPositionsRightAngle",
 	"photostudio_cameraPositionsFront": "photostudio_cameraPositionsFront",
-	"desktop_qrCodeGenerating": "desktop_qrCodeGenerating",
-	"desktop_qrCodeGeneratingHint": "desktop_qrCodeGeneratingHint",
-	"desktop_qrCodeCallToAction": "desktop_qrCodeCallToAction",
+	"desktop_qrCodeGenerating": "Swedish: QR Core is generating",
+	"desktop_qrCodeGeneratingHint": "Swedish: QR Core is generating2",
+	"desktop_qrCodeCallToAction": "Swedish: View in AR",
 	"desktop_qrCodeCallToActionHint": "desktop_qrCodeCallToActionHint",
 	"embedViewerTitle": "embedViewerTitle",
 	"embedViewerParagraph": "PembedViewerParagraph"
