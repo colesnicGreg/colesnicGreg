@@ -1,0 +1,18 @@
+{
+	"productLoadText": "productLoadText",
+	"configuratorLoadText": "configuratorLoadText",
+	"variantLoadPrefix": "variantLoadPrefix",
+	"photostudio_cameraPositionsLeft": "photostudio_cameraPositionsLeft",
+	"photostudio_cameraPositionsRight": "photostudio_cameraPositionsRight",
+	"photostudio_cameraPositionsTop": "photostudio_cameraPositionsTop",
+	"photostudio_cameraPositionsBack": "photostudio_cameraPositionsBack",
+	"photostudio_cameraPositionsLeftAngle": "photostudio_cameraPositionsLeftAngle",
+	"photostudio_cameraPositionsRightAngle": "photostudio_cameraPositionsRightAngle",
+	"photostudio_cameraPositionsFront": "photostudio_cameraPositionsFront",
+	"desktop_qrCodeGenerating": "desktop_qrCodeGenerating",
+	"desktop_qrCodeGeneratingHint": "desktop_qrCodeGeneratingHint",
+	"desktop_qrCodeCallToAction": "desktop_qrCodeCallToAction",
+	"desktop_qrCodeCallToActionHint": "desktop_qrCodeCallToActionHint",
+	"embedViewerTitle": "embedViewerTitle",
+	"embedViewerParagraph": "PembedViewerParagraph"
+}
