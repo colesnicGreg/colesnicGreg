@@ -1,18 +1,11 @@
 {
 	"productLoadText": "Product is loading(Translate to sv)",
-	"configuratorLoadText": " Configurator is loading(Translate to sv)",
-	"variantLoadPrefix": "(Translate to sv)",
-	"photostudio_cameraPositionsLeft": "photostudio_cameraPositionsLeft",
-	"photostudio_cameraPositionsRight": "photostudio_cameraPositionsRight",
-	"photostudio_cameraPositionsTop": "photostudio_cameraPositionsTop",
-	"photostudio_cameraPositionsBack": "photostudio_cameraPositionsBack",
-	"photostudio_cameraPositionsLeftAngle": "photostudio_cameraPositionsLeftAngle",
-	"photostudio_cameraPositionsRightAngle": "photostudio_cameraPositionsRightAngle",
-	"photostudio_cameraPositionsFront": "photostudio_cameraPositionsFront",
+	"configuratorLoadText": " Configuration is loading(Translate to sv)",
+	"variantLoadPrefix": "Variant is loading(Translate to sv)",
 	"desktop_qrCodeGenerating": "Swedish: QR Core is generating(Translate to sv)",
 	"desktop_qrCodeGeneratingHint": "Swedish: QR Core is generating(Translate to sv)",
 	"desktop_qrCodeCallToAction": "Point your camera at the QR code. Tap the banner that appears on your screen.(Translate to sv)",
 	"desktop_qrCodeCallToActionHint": "Generating QR code(Translate to sv)",
 	"embedViewerTitle": "Embed code(Translate to sv)",
-	"embedViewerParagraph": " any site(Translate to sv)"
+	"embedViewerParagraph": "Copy and paste the following embed code on any site(Translate to sv)"
 }
