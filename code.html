@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sayduck Configurator With Dynamic Material Color Picker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      font-family: 'Inter', sans-serif;
+      color: #1d1d1f;
+      background: #f4f4f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(244, 244, 246, 0.7) 40%, rgba(230, 233, 238, 0.85) 100%);
+    }
+
+    #sd-picker-ui {
+      --sd-glass-bg: rgba(255, 255, 255, 0.5);
+      --sd-glass-border: rgba(255, 255, 255, 0.6);
+      --sd-glass-blur: blur(24px);
+      --sd-header-color: rgba(60, 60, 67, 0.6);
+      --sd-text-primary: #1d1d1f;
+      --sd-active-bg: rgba(88, 86, 214, 0.1);
+      --sd-active-text: #5856d6;
+      --sd-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+      min-width: 300px;
+      width: 100%;
+      height: 100vh;
+      min-height: 450px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sd-panel {
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      width: 260px;
+      max-height: calc(100% - 90px);
+      background: var(--sd-glass-bg);
+      backdrop-filter: var(--sd-glass-blur);
+      -webkit-backdrop-filter: var(--sd-glass-blur);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 18px;
+      box-shadow: var(--sd-shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px) scale(0.98);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 100;
+      padding: 10px;
+    }
+
+    .sd-panel.open {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1);
+    }
+
+    .sd-scroll {
+      overflow-y: auto;
+      padding-right: 2px;
+      scrollbar-width: none;
+    }
+
+    .sd-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sd-group-head {
+      padding: 12px 8px 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--sd-header-color);
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .sd-group-head:hover {
+      color: #000;
+    }
+
+    .sd-arrow {
+      font-size: 10px;
+      opacity: 0.5;
+      transition: transform 0.3s ease;
+    }
+
+    .sd-group.active .sd-arrow {
+      transform: rotate(180deg);
+    }
+
+    .sd-group-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+      opacity: 0.5;
+    }
+
+    .sd-group.active .sd-group-body {
+      max-height: 500px;
+      opacity: 1;
+    }
+
+    .sd-divider {
+      height: 1px;
+      background: rgba(0, 0, 0, 0.06);
+      margin: 4px 8px;
+      display: block;
+    }
+
+    .sd-opt {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 2px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--sd-text-primary);
+      cursor: pointer;
+      transition: all 0.1s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sd-opt::before {
+      content: "•";
+      font-size: 16px;
+      line-height: 1;
+      color: currentColor;
+      opacity: 0.8;
+      flex: 0 0 auto;
+    }
+
+    .sd-opt:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .sd-opt.selected {
+      background: var(--sd-active-bg);
+      color: var(--sd-active-text);
+      font-weight: 600;
+    }
+
+    .sd-toggle {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 101;
+      border: none;
+    }
+
+    .sd-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .sd-toggle.rot svg {
+      transform: rotate(90deg);
+      color: var(--sd-active-text);
+    }
+
+    .sd-toggle svg {
+      width: 22px;
+      height: 22px;
+      fill: #333;
+      transition: all 0.4s ease;
+    }
+
+    .sd-color-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 230px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 18px;
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
+      color: #111;
+      z-index: 102;
+      overflow: hidden;
+    }
+
+    .sd-color-panel.collapsed .sd-color-body {
+      display: none;
+    }
+
+    .sd-color-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.35);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .sd-color-head:active {
+      cursor: grabbing;
+    }
+
+    .sd-color-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sd-color-title strong {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .sd-color-title span {
+      font-size: 11px;
+      color: rgba(29, 29, 31, 0.64);
+    }
+
+    .sd-color-collapse {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(17, 17, 17, 0.06);
+      color: #111;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .sd-color-body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .sd-color-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sd-color-input {
+      width: 54px;
+      height: 54px;
+      padding: 0;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      cursor: pointer;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .sd-color-input::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    .sd-color-input::-webkit-color-swatch {
+      border: none;
+      border-radius: 14px;
+    }
+
+    .sd-color-input::-moz-color-swatch {
+      border: none;
+      border-radius: 14px;
+    }
+
+    .sd-color-meta {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .sd-color-label {
+      font-size: 12px;
+      color: rgba(29, 29, 31, 0.64);
+    }
+
+    .sd-color-value {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .sd-color-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sd-color-btn {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .sd-color-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .sd-color-btn.primary {
+      background: #111827;
+      color: #fff;
+    }
+
+    .sd-color-btn.secondary {
+      background: rgba(17, 24, 39, 0.08);
+      color: #111827;
+    }
+
+    .sd-status {
+      min-height: 16px;
+      font-size: 11px;
+      color: rgba(29, 29, 31, 0.68);
+    }
+
+    @media (max-width: 720px) {
+      .sd-panel {
+        left: 12px;
+        right: 12px;
+        width: auto;
+      }
+
+      .sd-toggle {
+        left: 12px;
+        bottom: 12px;
+      }
+
+      .sd-color-panel {
+        width: 210px;
+        top: 12px;
+        right: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="sd-picker-ui">
+    <sayduck-viewer product="5f5d0dd0-f073-013e-5581-3a95a5b9371e" mode="configurator" background="white" hide-picker hide-embed hide-product-info hide-toggle-lights></sayduck-viewer>
+
+    <div class="sd-panel" id="sd-panel">
+      <div class="sd-scroll" id="sd-content"></div>
+    </div>
+
+    <button class="sd-toggle" id="sd-btn" type="button" aria-label="Toggle configurator picker">
+      <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.85,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+    </button>
+
+    <div class="sd-color-panel" id="sd-color-panel">
+      <div class="sd-color-head" id="sd-color-head">
+        <div class="sd-color-title">
+          <strong>Material Color</strong>
+        </div>
+        <button class="sd-color-collapse" id="sd-color-collapse" type="button" aria-label="Collapse material color picker">-</button>
+      </div>
+      <div class="sd-color-body" id="sd-color-body">
+        <div class="sd-color-row">
+          <input class="sd-color-input" id="sd-color-input" type="color" value="#d60003" aria-label="Pick a material color">
+          <div class="sd-color-meta">
+            <div class="sd-color-label">Color Value</div>
+            <div class="sd-color-value" id="sd-color-value">#FFFFFF</div>
+          </div>
+        </div>
+        <div class="sd-color-actions">
+          <button class="sd-color-btn secondary" id="sd-reset-color" type="button">Reset</button>
+        </div>
+        <div class="sd-status" id="sd-status">Ready when viewer API loads.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRODUCT_UUID = '5f5d0dd0-f073-013e-5581-3a95a5b9371e';
+    const DYNAMIC_MATERIAL_UUID = '364cae70-f081-013e-c47c-3e857ed3ff12';
+    const DEFAULT_COLOR = '#d60003';
+
+    function hexToRgb(hex) {
+      const normalized = hex.replace('#', '');
+      return {
+        red: parseInt(normalized.slice(0, 2), 16),
+        green: parseInt(normalized.slice(2, 4), 16),
+        blue: parseInt(normalized.slice(4, 6), 16),
+        alpha: 255,
+      };
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function setupDraggablePanel(panel, handle, container) {
+      let activePointerId = null;
+      let startX = 0;
+      let startY = 0;
+      let originX = 0;
+      let originY = 0;
+
+      handle.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) {
+          return;
+        }
+
+        activePointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+
+        const panelRect = panel.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        originX = panelRect.left - containerRect.left;
+        originY = panelRect.top - containerRect.top;
+
+        panel.style.left = originX + 'px';
+        panel.style.top = originY + 'px';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+
+        handle.setPointerCapture(activePointerId);
+      });
+
+      handle.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== activePointerId) {
+          return;
+        }
+
+        const maxX = container.clientWidth - panel.offsetWidth;
+        const maxY = container.clientHeight - panel.offsetHeight;
+        const nextX = clamp(originX + (event.clientX - startX), 0, Math.max(maxX, 0));
+        const nextY = clamp(originY + (event.clientY - startY), 0, Math.max(maxY, 0));
+
+        panel.style.left = nextX + 'px';
+        panel.style.top = nextY + 'px';
+      });
+
+      function releasePointer(event) {
+        if (event.pointerId !== activePointerId) {
+          return;
+        }
+
+        handle.releasePointerCapture(activePointerId);
+        activePointerId = null;
+      }
+
+      handle.addEventListener('pointerup', releasePointer);
+      handle.addEventListener('pointercancel', releasePointer);
+    }
+
+    window.addEventListener('sayduck.api-ready', (event) => {
+      const api = event.detail.instance;
+      const root = document.getElementById('sd-picker-ui');
+      const container = document.getElementById('sd-content');
+      const panel = document.getElementById('sd-panel');
+      const btn = document.getElementById('sd-btn');
+      const colorPanel = document.getElementById('sd-color-panel');
+      const colorHead = document.getElementById('sd-color-head');
+      const colorCollapse = document.getElementById('sd-color-collapse');
+      const colorInput = document.getElementById('sd-color-input');
+      const colorValue = document.getElementById('sd-color-value');
+      const resetColor = document.getElementById('sd-reset-color');
+      const status = document.getElementById('sd-status');
+
+      console.log('Sayduck product UUID:', PRODUCT_UUID);
+      console.log('Sayduck material UUID target:', DYNAMIC_MATERIAL_UUID);
+      console.log('Available material UUIDs:', api.scene.getAllMaterialUuids());
+
+      btn.onclick = () => {
+        btn.classList.toggle('rot');
+        panel.classList.toggle('open');
+      };
+
+      colorCollapse.onclick = () => {
+        colorPanel.classList.toggle('collapsed');
+        colorCollapse.textContent = colorPanel.classList.contains('collapsed') ? '+' : '-';
+      };
+
+      async function applyMaterialColor(hex) {
+        colorValue.textContent = hex.toUpperCase();
+        status.textContent = 'Updating material...';
+
+        try {
+          await api.scene.updateMaterial(DYNAMIC_MATERIAL_UUID, {
+            albedoColour: hexToRgb(hex),
+          });
+        } catch (error) {
+          console.error('Failed to update material', error);
+          status.textContent = 'Material update failed. Check console.';
+        }
+      }
+
+      colorInput.addEventListener('input', () => {
+        applyMaterialColor(colorInput.value);
+      });
+
+      resetColor.addEventListener('click', () => {
+        colorInput.value = DEFAULT_COLOR;
+        applyMaterialColor(DEFAULT_COLOR);
+      });
+
+      window.addEventListener('sayduck.viewer.material.updated', () => {
+        status.textContent = 'Material updated in viewer.';
+      });
+
+      setupDraggablePanel(colorPanel, colorHead, root);
+
+      const configs = api.configurator.getConfigurations();
+      container.innerHTML = '';
+
+      configs.forEach((config, index) => {
+        if (config.name === 'Default') {
+          return;
+        }
+
+        if (index > 0) {
+          const divider = document.createElement('div');
+          divider.className = 'sd-divider';
+          container.appendChild(divider);
+        }
+
+        const group = document.createElement('div');
+        group.className = 'sd-group active';
+
+        const header = document.createElement('div');
+        header.className = 'sd-group-head';
+        header.innerHTML = `<span>${config.name}</span><span class="sd-arrow">▼</span>`;
+        header.onclick = () => {
+          group.classList.toggle('active');
+        };
+
+        const body = document.createElement('div');
+        body.className = 'sd-group-body';
+
+        (config.children || []).forEach((opt) => {
+          const btnOpt = document.createElement('button');
+          btnOpt.className = 'sd-opt';
+          btnOpt.type = 'button';
+          btnOpt.textContent = opt.name;
+
+          if (config.value && config.value.id === opt.id) {
+            btnOpt.classList.add('selected');
+          }
+
+          btnOpt.onclick = () => {
+            api.configurator.setConfigurationValue(config, opt);
+            Array.from(body.children).forEach((child) => child.classList.remove('selected'));
+            btnOpt.classList.add('selected');
+          };
+
+          body.appendChild(btnOpt);
+        });
+
+        group.appendChild(header);
+        group.appendChild(body);
+        container.appendChild(group);
+      });
+
+      colorInput.value = DEFAULT_COLOR;
+      colorValue.textContent = DEFAULT_COLOR.toUpperCase();
+      status.textContent = 'Viewer API loaded. Pick a color.';
+    });
+  </script>
+
+  <script src="https://viewer.sayduck.com" type="module" async></script>
+</body>
+</html>
