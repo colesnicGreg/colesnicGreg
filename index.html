@@ -203,7 +203,7 @@
     .sd-color-panel {
       position: absolute;
       top: 20px;
-      right: 20px;
+      right: 150px;
       width: 230px;
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(18px);
@@ -372,7 +372,7 @@
       .sd-color-panel {
         width: 210px;
         top: 12px;
-        right: 12px;
+        right: 150px;
       }
     }
   </style>
@@ -414,7 +414,11 @@
 
   <script>
     const PRODUCT_UUID = '5f5d0dd0-f073-013e-5581-3a95a5b9371e';
-    const DYNAMIC_MATERIAL_UUID = '364cae70-f081-013e-c47c-3e857ed3ff12';
+    const DYNAMIC_MATERIAL_UUIDS = [
+      '3c2ab140-04e0-013f-3596-72e5bca2b9bf',
+      'c29eee50-05b4-013f-ecc1-7a4de7f159c4',
+      '364cae70-f081-013e-c47c-3e857ed3ff12',
+    ];
     const DEFAULT_COLOR = '#d60003';
 
     function hexToRgb(hex) {
@@ -503,7 +507,7 @@
       const status = document.getElementById('sd-status');
 
       console.log('Sayduck product UUID:', PRODUCT_UUID);
-      console.log('Sayduck material UUID target:', DYNAMIC_MATERIAL_UUID);
+      console.log('Sayduck material UUID targets:', DYNAMIC_MATERIAL_UUIDS);
       console.log('Available material UUIDs:', api.scene.getAllMaterialUuids());
 
       btn.onclick = () => {
@@ -521,11 +525,15 @@
         status.textContent = 'Updating material...';
 
         try {
-          await api.scene.updateMaterial(DYNAMIC_MATERIAL_UUID, {
-            albedoColour: hexToRgb(hex),
-          });
+          await Promise.all(
+            DYNAMIC_MATERIAL_UUIDS.map((materialUuid) =>
+              api.scene.updateMaterial(materialUuid, {
+                albedoColour: hexToRgb(hex),
+              })
+            )
+          );
         } catch (error) {
-          console.error('Failed to update material', error);
+          console.error('Failed to update materials', error);
           status.textContent = 'Material update failed. Check console.';
         }
       }
