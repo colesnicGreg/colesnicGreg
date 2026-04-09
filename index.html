@@ -357,6 +357,41 @@
       color: rgba(29, 29, 31, 0.68);
     }
 
+    .sd-selected-wrap {
+      display: grid;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .sd-selected-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .sd-selected-list {
+      margin: 0;
+      padding: 10px 12px;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      border-radius: 12px;
+      background: rgba(17, 24, 39, 0.05);
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .sd-selected-item {
+      font-size: 12px;
+      line-height: 1.35;
+      color: rgba(17, 24, 39, 0.88);
+    }
+
+    .sd-selected-empty {
+      font-size: 12px;
+      color: rgba(17, 24, 39, 0.56);
+    }
+
     @media (max-width: 720px) {
       .sd-panel {
         left: 12px;
@@ -390,12 +425,12 @@
     </button>
 
     <div class="sd-color-panel" id="sd-color-panel">
-      <div class="sd-color-head" id="sd-color-head">
-        <div class="sd-color-title">
-          <strong>Material Color</strong>
+        <div class="sd-color-head" id="sd-color-head">
+          <div class="sd-color-title">
+            <strong>Pick Custom Material Color</strong>
+          </div>
+          <button class="sd-color-collapse" id="sd-color-collapse" type="button" aria-label="Collapse material color picker">-</button>
         </div>
-        <button class="sd-color-collapse" id="sd-color-collapse" type="button" aria-label="Collapse material color picker">-</button>
-      </div>
       <div class="sd-color-body" id="sd-color-body">
         <div class="sd-color-row">
           <input class="sd-color-input" id="sd-color-input" type="color" value="#d60003" aria-label="Pick a material color">
@@ -408,6 +443,14 @@
           <button class="sd-color-btn secondary" id="sd-reset-color" type="button">Reset</button>
         </div>
         <div class="sd-status" id="sd-status">Ready when viewer API loads.</div>
+        <div class="sd-selected-wrap">
+          <div class="sd-selected-title">Selected Configuration</div>
+          <ul class="sd-selected-list" id="sd-selected-list"></ul>
+        </div>
+        <div class="sd-color-actions">
+          <button class="sd-color-btn secondary" id="sd-export-variants" type="button">Export .txt</button>
+          <button class="sd-color-btn primary" id="sd-email-variants" type="button">Send Email</button>
+        </div>
       </div>
     </div>
   </div>
@@ -504,6 +547,9 @@
       const colorInput = document.getElementById('sd-color-input');
       const colorValue = document.getElementById('sd-color-value');
       const resetColor = document.getElementById('sd-reset-color');
+      const selectedList = document.getElementById('sd-selected-list');
+      const exportVariants = document.getElementById('sd-export-variants');
+      const emailVariants = document.getElementById('sd-email-variants');
       const status = document.getElementById('sd-status');
 
       console.log('Sayduck product UUID:', PRODUCT_UUID);
@@ -520,8 +566,84 @@
         colorCollapse.textContent = colorPanel.classList.contains('collapsed') ? '+' : '-';
       };
 
+      function getSelectedConfigurationLines() {
+        if (typeof api.configurator.getSelectedVariants === 'function') {
+          const selectedVariants = api.configurator.getSelectedVariants() || [];
+
+          if (selectedVariants.length) {
+            return selectedVariants
+              .map((variant) => {
+                const parentConfig = (api.configurator.getConfigurations() || []).find((config) =>
+                  (config.children || []).some((child) => child.id === variant.id)
+                );
+
+                if (!parentConfig || parentConfig.name === 'Default') {
+                  return null;
+                }
+
+                return `${parentConfig.name} - ${variant.name}`;
+              })
+              .filter(Boolean);
+          }
+        }
+
+        return api.configurator
+          .getConfigurations()
+          .filter((config) => config.name !== 'Default')
+          .map((config) => {
+            const selectedVariant = config.value || (config.children || []).find((child) => child.id === config.selectedVariantId);
+
+            if (!selectedVariant || !selectedVariant.name) {
+              return null;
+            }
+
+            return `${config.name} - ${selectedVariant.name}`;
+          })
+          .filter(Boolean);
+      }
+
+      function renderSelectedConfigurations() {
+        const selectedLines = getSelectedConfigurationLines();
+        selectedList.innerHTML = '';
+
+        const customColorItem = document.createElement('li');
+        customColorItem.className = 'sd-selected-item';
+        customColorItem.textContent = `Custom Color: ${colorInput.value.toUpperCase()}`;
+        selectedList.appendChild(customColorItem);
+
+        if (!selectedLines.length) {
+          const emptyItem = document.createElement('li');
+          emptyItem.className = 'sd-selected-empty';
+          emptyItem.textContent = 'No variants selected.';
+          selectedList.appendChild(emptyItem);
+          return [`Custom Color: ${colorInput.value.toUpperCase()}`];
+        }
+
+        selectedLines.forEach((line) => {
+          const item = document.createElement('li');
+          item.className = 'sd-selected-item';
+          item.textContent = line;
+          selectedList.appendChild(item);
+        });
+
+        return [`Custom Color: ${colorInput.value.toUpperCase()}`, ...selectedLines];
+      }
+
+      function getSelectedConfigurationsText() {
+        return renderSelectedConfigurations().join('\r\n');
+      }
+
+      function scheduleSelectedConfigurationsRefresh(delays) {
+        delays.forEach((delay) => {
+          window.setTimeout(() => {
+            renderSelectedConfigurations();
+          }, delay);
+        });
+      }
+
       async function applyMaterialColor(hex) {
         colorValue.textContent = hex.toUpperCase();
+        renderSelectedConfigurations();
         status.textContent = 'Updating material...';
 
         try {
@@ -545,6 +667,28 @@
       resetColor.addEventListener('click', () => {
         colorInput.value = DEFAULT_COLOR;
         applyMaterialColor(DEFAULT_COLOR);
+      });
+
+      exportVariants.addEventListener('click', () => {
+        const selectedText = getSelectedConfigurationsText();
+        const fileContent = selectedText || 'No variants selected.';
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const fileUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = fileUrl;
+        link.download = 'selected-configurations.txt';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(fileUrl);
+      });
+
+      emailVariants.addEventListener('click', () => {
+        const selectedText = getSelectedConfigurationsText() || 'No variants selected.';
+        const subject = encodeURIComponent('Selected Configurations and Variants');
+        const body = encodeURIComponent(selectedText);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
       });
 
       window.addEventListener('sayduck.viewer.material.updated', () => {
@@ -594,6 +738,7 @@
             api.configurator.setConfigurationValue(config, opt);
             Array.from(body.children).forEach((child) => child.classList.remove('selected'));
             btnOpt.classList.add('selected');
+            scheduleSelectedConfigurationsRefresh([0, 250, 800, 1500]);
           };
 
           body.appendChild(btnOpt);
@@ -606,6 +751,8 @@
 
       colorInput.value = DEFAULT_COLOR;
       colorValue.textContent = DEFAULT_COLOR.toUpperCase();
+      selectedList.innerHTML = '<li class="sd-selected-empty">Loading selected variants...</li>';
+      scheduleSelectedConfigurationsRefresh([0, 300, 900, 1800, 3000]);
       status.textContent = 'Viewer API loaded. Pick a color.';
     });
   </script>
