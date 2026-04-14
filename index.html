@@ -414,7 +414,7 @@
 </head>
 <body>
   <div id="sd-picker-ui">
-    <sayduck-viewer product="5f5d0dd0-f073-013e-5581-3a95a5b9371e" mode="configurator" background="white" hide-picker hide-embed hide-product-info hide-toggle-lights></sayduck-viewer>
+    <sayduck-viewer product="3c515420-16dd-013f-3e04-5e424f58d366" mode="configurator" background="white" hide-picker hide-embed hide-product-info hide-toggle-lights></sayduck-viewer>
 
     <div class="sd-panel" id="sd-panel">
       <div class="sd-scroll" id="sd-content"></div>
@@ -427,16 +427,23 @@
     <div class="sd-color-panel" id="sd-color-panel">
         <div class="sd-color-head" id="sd-color-head">
           <div class="sd-color-title">
-            <strong>Pick Custom Material Color</strong>
+            <strong>See Hestia in your airline’s colour</strong>
           </div>
           <button class="sd-color-collapse" id="sd-color-collapse" type="button" aria-label="Collapse material color picker">-</button>
         </div>
       <div class="sd-color-body" id="sd-color-body">
         <div class="sd-color-row">
-          <input class="sd-color-input" id="sd-color-input" type="color" value="#d60003" aria-label="Pick a material color">
+          <input class="sd-color-input" id="sd-bassinet-color-input" type="color" value="#d60003" aria-label="Pick a color for bassinet">
           <div class="sd-color-meta">
-            <div class="sd-color-label">Color Value</div>
-            <div class="sd-color-value" id="sd-color-value">#FFFFFF</div>
+            <div class="sd-color-label">Bassinet Color</div>
+            <div class="sd-color-value" id="sd-bassinet-color-value">#FFFFFF</div>
+          </div>
+        </div>
+        <div class="sd-color-row">
+          <input class="sd-color-input" id="sd-mattress-color-input" type="color" value="#d60003" aria-label="Pick a color for mattress">
+          <div class="sd-color-meta">
+            <div class="sd-color-label">Mattress Color</div>
+            <div class="sd-color-value" id="sd-mattress-color-value">#FFFFFF</div>
           </div>
         </div>
         <div class="sd-color-actions">
@@ -456,12 +463,14 @@
   </div>
 
   <script>
-    const PRODUCT_UUID = '5f5d0dd0-f073-013e-5581-3a95a5b9371e';
-    const DYNAMIC_MATERIAL_UUIDS = [
-      '3c2ab140-04e0-013f-3596-72e5bca2b9bf',
-      'c29eee50-05b4-013f-ecc1-7a4de7f159c4',
-      '364cae70-f081-013e-c47c-3e857ed3ff12',
+    const PRODUCT_UUID = '3c515420-16dd-013f-3e04-5e424f58d366';
+    const BASSINET_MATERIAL_UUIDS = [
+      '3c825120-16dd-013f-e7ca-5e424f58d366',
+      '3c8a7e80-16dd-013f-efb6-5e424f58d366',
+      '3c7e5ec0-16dd-013f-ecb1-5e424f58d366',
     ];
+    const MATTRESS_MATERIAL_UUID = '3c9b2470-16dd-013f-cb0f-5e424f58d366';
+    const HIDDEN_SELECTED_CONFIGURATION_NAMES = ['Basket & Canopy', 'Mattress'];
     const DEFAULT_COLOR = '#d60003';
 
     function hexToRgb(hex) {
@@ -544,8 +553,10 @@
       const colorPanel = document.getElementById('sd-color-panel');
       const colorHead = document.getElementById('sd-color-head');
       const colorCollapse = document.getElementById('sd-color-collapse');
-      const colorInput = document.getElementById('sd-color-input');
-      const colorValue = document.getElementById('sd-color-value');
+      const bassinetColorInput = document.getElementById('sd-bassinet-color-input');
+      const bassinetColorValue = document.getElementById('sd-bassinet-color-value');
+      const mattressColorInput = document.getElementById('sd-mattress-color-input');
+      const mattressColorValue = document.getElementById('sd-mattress-color-value');
       const resetColor = document.getElementById('sd-reset-color');
       const selectedList = document.getElementById('sd-selected-list');
       const exportVariants = document.getElementById('sd-export-variants');
@@ -553,7 +564,8 @@
       const status = document.getElementById('sd-status');
 
       console.log('Sayduck product UUID:', PRODUCT_UUID);
-      console.log('Sayduck material UUID targets:', DYNAMIC_MATERIAL_UUIDS);
+      console.log('Sayduck bassinet material UUID targets:', BASSINET_MATERIAL_UUIDS);
+      console.log('Sayduck mattress material UUID target:', MATTRESS_MATERIAL_UUID);
       console.log('Available material UUIDs:', api.scene.getAllMaterialUuids());
 
       btn.onclick = () => {
@@ -577,7 +589,11 @@
                   (config.children || []).some((child) => child.id === variant.id)
                 );
 
-                if (!parentConfig || parentConfig.name === 'Default') {
+                if (
+                  !parentConfig ||
+                  parentConfig.name === 'Default' ||
+                  HIDDEN_SELECTED_CONFIGURATION_NAMES.includes(parentConfig.name)
+                ) {
                   return null;
                 }
 
@@ -589,7 +605,11 @@
 
         return api.configurator
           .getConfigurations()
-          .filter((config) => config.name !== 'Default')
+          .filter(
+            (config) =>
+              config.name !== 'Default' &&
+              !HIDDEN_SELECTED_CONFIGURATION_NAMES.includes(config.name)
+          )
           .map((config) => {
             const selectedVariant = config.value || (config.children || []).find((child) => child.id === config.selectedVariantId);
 
@@ -606,17 +626,25 @@
         const selectedLines = getSelectedConfigurationLines();
         selectedList.innerHTML = '';
 
-        const customColorItem = document.createElement('li');
-        customColorItem.className = 'sd-selected-item';
-        customColorItem.textContent = `Custom Color: ${colorInput.value.toUpperCase()}`;
-        selectedList.appendChild(customColorItem);
+        const bassinetCustomColorItem = document.createElement('li');
+        bassinetCustomColorItem.className = 'sd-selected-item';
+        bassinetCustomColorItem.textContent = `Bassinet Custom Color: ${bassinetColorInput.value.toUpperCase()}`;
+        selectedList.appendChild(bassinetCustomColorItem);
+
+        const mattressCustomColorItem = document.createElement('li');
+        mattressCustomColorItem.className = 'sd-selected-item';
+        mattressCustomColorItem.textContent = `Mattress Custom Color: ${mattressColorInput.value.toUpperCase()}`;
+        selectedList.appendChild(mattressCustomColorItem);
 
         if (!selectedLines.length) {
           const emptyItem = document.createElement('li');
           emptyItem.className = 'sd-selected-empty';
           emptyItem.textContent = 'No variants selected.';
           selectedList.appendChild(emptyItem);
-          return [`Custom Color: ${colorInput.value.toUpperCase()}`];
+          return [
+            `Bassinet Custom Color: ${bassinetColorInput.value.toUpperCase()}`,
+            `Mattress Custom Color: ${mattressColorInput.value.toUpperCase()}`,
+          ];
         }
 
         selectedLines.forEach((line) => {
@@ -626,7 +654,11 @@
           selectedList.appendChild(item);
         });
 
-        return [`Custom Color: ${colorInput.value.toUpperCase()}`, ...selectedLines];
+        return [
+          `Bassinet Custom Color: ${bassinetColorInput.value.toUpperCase()}`,
+          `Mattress Custom Color: ${mattressColorInput.value.toUpperCase()}`,
+          ...selectedLines,
+        ];
       }
 
       function getSelectedConfigurationsText() {
@@ -641,14 +673,14 @@
         });
       }
 
-      async function applyMaterialColor(hex) {
-        colorValue.textContent = hex.toUpperCase();
+      async function applyMaterialColor(hex, colorValueElement, materialUuids) {
+        colorValueElement.textContent = hex.toUpperCase();
         renderSelectedConfigurations();
         status.textContent = 'Updating material...';
 
         try {
           await Promise.all(
-            DYNAMIC_MATERIAL_UUIDS.map((materialUuid) =>
+            materialUuids.map((materialUuid) =>
               api.scene.updateMaterial(materialUuid, {
                 albedoColour: hexToRgb(hex),
               })
@@ -660,13 +692,24 @@
         }
       }
 
-      colorInput.addEventListener('input', () => {
-        applyMaterialColor(colorInput.value);
+      bassinetColorInput.addEventListener('input', () => {
+        applyMaterialColor(bassinetColorInput.value, bassinetColorValue, BASSINET_MATERIAL_UUIDS);
+      });
+
+      mattressColorInput.addEventListener('input', () => {
+        applyMaterialColor(mattressColorInput.value, mattressColorValue, [MATTRESS_MATERIAL_UUID]);
       });
 
       resetColor.addEventListener('click', () => {
-        colorInput.value = DEFAULT_COLOR;
-        applyMaterialColor(DEFAULT_COLOR);
+        bassinetColorInput.value = DEFAULT_COLOR;
+        mattressColorInput.value = DEFAULT_COLOR;
+        bassinetColorValue.textContent = DEFAULT_COLOR.toUpperCase();
+        mattressColorValue.textContent = DEFAULT_COLOR.toUpperCase();
+        renderSelectedConfigurations();
+        Promise.all([
+          applyMaterialColor(DEFAULT_COLOR, bassinetColorValue, BASSINET_MATERIAL_UUIDS),
+          applyMaterialColor(DEFAULT_COLOR, mattressColorValue, [MATTRESS_MATERIAL_UUID]),
+        ]);
       });
 
       exportVariants.addEventListener('click', () => {
@@ -730,7 +773,9 @@
           btnOpt.type = 'button';
           btnOpt.textContent = opt.name;
 
-          if (config.value && config.value.id === opt.id) {
+          const fallbackSelectedChild = !config.value && config.children && config.children[0];
+
+          if ((config.value && config.value.id === opt.id) || (fallbackSelectedChild && fallbackSelectedChild.id === opt.id)) {
             btnOpt.classList.add('selected');
           }
 
@@ -749,8 +794,10 @@
         container.appendChild(group);
       });
 
-      colorInput.value = DEFAULT_COLOR;
-      colorValue.textContent = DEFAULT_COLOR.toUpperCase();
+      bassinetColorInput.value = DEFAULT_COLOR;
+      bassinetColorValue.textContent = DEFAULT_COLOR.toUpperCase();
+      mattressColorInput.value = DEFAULT_COLOR;
+      mattressColorValue.textContent = DEFAULT_COLOR.toUpperCase();
       selectedList.innerHTML = '<li class="sd-selected-empty">Loading selected variants...</li>';
       scheduleSelectedConfigurationsRefresh([0, 300, 900, 1800, 3000]);
       status.textContent = 'Viewer API loaded. Pick a color.';
