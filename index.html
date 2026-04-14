@@ -458,6 +458,9 @@
           <button class="sd-color-btn secondary" id="sd-export-variants" type="button">Export .txt</button>
           <button class="sd-color-btn primary" id="sd-email-variants" type="button">Send Email</button>
         </div>
+        <div class="sd-color-actions">
+          <button class="sd-color-btn primary" id="sd-download-screenshot" type="button">Download Screenshot</button>
+        </div>
       </div>
     </div>
   </div>
@@ -561,6 +564,7 @@
       const selectedList = document.getElementById('sd-selected-list');
       const exportVariants = document.getElementById('sd-export-variants');
       const emailVariants = document.getElementById('sd-email-variants');
+      const downloadScreenshot = document.getElementById('sd-download-screenshot');
       const status = document.getElementById('sd-status');
 
       console.log('Sayduck product UUID:', PRODUCT_UUID);
@@ -732,6 +736,70 @@
         const subject = encodeURIComponent('Selected Configurations and Variants');
         const body = encodeURIComponent(selectedText);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      });
+
+      async function downloadFullScreenshot() {
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+          status.textContent = 'Browser screen capture is not supported here.';
+          return;
+        }
+
+        status.textContent = 'Choose this browser tab to capture the viewer with pickers.';
+
+        let stream;
+
+        try {
+          stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              displaySurface: 'browser',
+              preferCurrentTab: true,
+            },
+            audio: false,
+          });
+
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.muted = true;
+          video.playsInline = true;
+
+          await video.play();
+          await new Promise((resolve) => window.setTimeout(resolve, 250));
+
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          const context = canvas.getContext('2d');
+
+          if (!context) {
+            throw new Error('Canvas context not available');
+          }
+
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const imageUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+          link.href = imageUrl;
+          link.download = `sayduck-configurator-${stamp}.png`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          status.textContent = 'Screenshot downloaded.';
+        } catch (error) {
+          console.error('Screenshot capture failed', error);
+          status.textContent = 'Screenshot capture was cancelled or failed.';
+        } finally {
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        }
+      }
+
+      downloadScreenshot.addEventListener('click', () => {
+        downloadFullScreenshot();
       });
 
       window.addEventListener('sayduck.viewer.material.updated', () => {
